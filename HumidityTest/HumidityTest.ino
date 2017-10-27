@@ -1,4 +1,4 @@
-#include <SD.h>;
+
 #include "DHT.h"
  
 // what pins we're connected to
@@ -11,7 +11,6 @@ unsigned long previousMillis = 0;
 const long interval = 2000;
  
 DHT dht(DHTIN,DHTOUT, DHTTYPE);
- 
  
 void setup() {
   
@@ -29,13 +28,10 @@ void loop() {
   delay(400);
  
   // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
- 
-  float hum = dht.readHumidity();
-  float temp = dht.readTemperature();
- 
-  // Read temperature as Celsius
+  // Sensor readings may also be up to 2 seconds 'old'.
 
+  //Read Humidity
+  float hum = dht.readHumidity();
  
   // Check if any reads failed and exit early (to try again).
   if (isnan(hum)) {
@@ -45,6 +41,7 @@ void loop() {
   
   unsigned long currentMillis = millis();
 
+  //Print out humidity readiing
   if (currentMillis - previousMillis >= interval) {
     previousMillis = currentMillis;
    
