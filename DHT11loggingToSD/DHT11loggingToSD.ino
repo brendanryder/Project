@@ -17,6 +17,7 @@ DHT dht(DHTIN, DHTOUT, DHTTYPE);
 File myFile;
 
 void setup() {
+  
 
   Serial.begin(9600);
   Serial.print("\nInitializing SD card...");
@@ -27,6 +28,17 @@ void setup() {
   }
   //Initialize the sensor
   dht.begin();
+
+  /*
+   * Allow time for Sensor values to re read correctly
+   * as sensor reading can be delayed for up to 2 seconds
+   */
+  for(int i=0; i<50; i++)
+  {
+    dht.readHumidity();
+    dht.readTemperature();
+    delay(50);
+  }
 
   Serial.println("initialization done.");
   myFile = SD.open("DHTlogger.csv", FILE_WRITE);
