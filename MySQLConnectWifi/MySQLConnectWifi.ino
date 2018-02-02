@@ -1,14 +1,8 @@
 /*
-  MySQL Connector/Arduino Example : connect by wifi
-
-  If you do not see messages indicating you have a connection, refer to the
-  manual for troubleshooting tips. The most common issues are the server is
-  not accessible from the network or the user name and password is incorrect.
-
-  Note: The MAC address can be anything so long as it is unique on your network.
-
-  Created by: Dr. Charles A. Bell
+ * MYSQL connecting to database iusing WIFI on Galileo
+ * 
 */
+
 #include <WiFi.h>                  // Use this for WiFi instead of Ethernet.h
 #include <MySQL_Connection.h>
 #include <MySQL_Cursor.h>
@@ -36,6 +30,7 @@ void setup() {
     Serial.println("Couldn't get a wifi connection");
     while(true);
   }
+  
   // print out info about the connection:
   else {
     Serial.println("Connected to network");
