@@ -48,7 +48,7 @@
 
 <form class="loginForm" action = "" method = "post">
   <div class="LoginImgContainer">
-    <img class = "LoginImg" src="weather.png" alt="weather">
+    <img src="weather.png" alt="weather">
   </div>
 
   <div class="LoginContainer">
