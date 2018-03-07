@@ -9,7 +9,7 @@
       $user = mysqli_real_escape_string($db,$_POST['username']);
       $pass = mysqli_real_escape_string($db,$_POST['password']); 
       
-      $sql = "SELECT id FROM admin WHERE BINARY username = '$user' AND BINARY passcode = '$pass'";
+      $sql = "SELECT id FROM admin WHERE username = '$user' AND BINARY passcode = '$pass'";
       $result = mysqli_query($db,$sql);
       $row = mysqli_fetch_array($result,MYSQLI_ASSOC);
       $active = $row['active'];
