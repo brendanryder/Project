@@ -25,22 +25,22 @@
 		}
 		if(strlen($password) < 6) {
 			$error = true;
-			$length_error = "Password must conatin at least SIX characters";
+			$length_error = "Password must contain at least SIX characters";
 		}
 		
 		if(!preg_match('/[A-Z]/', $password)){
 			$error = true;
-			$caps_error = "Password must conatin at least ONE UPPERCASE character";
+			$caps_error = "Password must contain at least ONE UPPERCASE character";
 		}
 		
 		if(!preg_match('/[0-9]/', $password)){
 			$error = true;
-			$num_error = "Password must conatin at least ONE number";
+			$num_error = "Password must contain at least ONE number";
 		}
 		
 		if (preg_match('/\s/', $password)) {
 			$error = true;
-			$whitespace_error = "Password cannot conatin WHITESPACE characters";
+			$whitespace_error = "Password cannot contain WHITESPACE characters";
 		}		
 	
 		if($password != $confirm_password) {
