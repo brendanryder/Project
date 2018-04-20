@@ -1,6 +1,6 @@
 /*
    Brendan Ryder
-   30/03/2018
+   20/04/2018
 */
 
 
@@ -9,6 +9,8 @@
 #include <MySQL_Cursor.h>
 #include <stdio.h>
 #include "DHT.h"
+#include <math.h>
+
 
 // what pins we're connected to
 #define DHTIN 4
@@ -38,7 +40,9 @@ double myTemperature;
 int tempPin = A3; // analog input pin
 unsigned long previousMillis = 0;
 unsigned long previousMillis1 = 0;
-unsigned long previousMillisHumidity = 0;
+unsigned long previousMillisDay = 0;
+unsigned long previousMillisWeek = 0;
+
 const long interval = 5000;
 double humid;
 double wind;
@@ -47,38 +51,53 @@ int DBConnected = 0;
 
 byte mac_addr[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 
-IPAddress server_addr(192, 168, 0, 157); // IP of the MySQL *server* here
+IPAddress server_addr(192,168,43,79); // IP of the MySQL *server* here
 char user[] = "root";              // MySQL user login username
 char password[] = "root";        // MySQL user login password
 
 
 // Sample query
-char INSERT_SQL[] = "INSERT INTO weather3.temp(Temperature,Humidity,Wind) VALUES (%.1f, %.1f, %.1f)";
+char INSERT_SQL[] = "INSERT INTO weather3.temp(Temperature,Humidity,Wind,StandardDeviation) VALUES (%.1f, %.1f, %.1f, %.2f)";
+char INSERT_SQL_NULL[] = "INSERT INTO weather3.temp(Temperature,Humidity,Wind,StandardDeviation) VALUES (%.1f, %.1f, %.1f, NULL)";
 /*
    Insert Hourly Database Values
 */
-char INSERT_SQL_HOUR_AVG[] = "INSERT INTO weather3.hourlyavg (Temperature,Humidity,Wind )SELECT ROUND(AVG(Temperature),1), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 119 second AND NOT EXISTS( SELECT ID FROM weather3.hourlyavg WHERE recorded >= NOW() - interval 119 second limit 1)";
-char INSERT_SQL_HOUR_MAX[] = "INSERT INTO weather3.hourlymax (Temperature,Humidity,Wind )SELECT ROUND(MAX(Temperature),1), MAX(Humidity), ROUND(MAX(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 119 second AND NOT EXISTS( SELECT ID FROM weather3.hourlymax WHERE time >= NOW() - interval 119 second limit 1)";
-char INSERT_SQL_HOUR_MIN[] = "INSERT INTO weather3.hourlymin (Temperature,Humidity,Wind )SELECT MIN(Temperature), MIN(Humidity), ROUND(MIN(Wind),1) FROM weather3.temp WHERE recorded >= NOW() - interval 60 minute AND NOT EXISTS( SELECT ID FROM weather3.dailyavg WHERE time1 >= NOW() - interval 55 SECOND limit 1)";
+char INSERT_SQL_HOUR_AVG[] = "INSERT INTO weather3.hourlyavg (Temperature,Humidity,Wind )SELECT ROUND(AVG(Temperature),1), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 60 second AND NOT EXISTS( SELECT ID FROM weather3.hourlyavg WHERE recorded >= NOW() - interval 5 second limit 1)";
+char INSERT_SQL_HOUR_MAX[] = "INSERT INTO weather3.hourlymax (Temperature,Humidity,Wind )SELECT ROUND(MAX(Temperature),1), MAX(Humidity), ROUND(MAX(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 60 second AND NOT EXISTS( SELECT ID FROM weather3.hourlymax WHERE time >= NOW() - interval 5 second limit 1)";
+char INSERT_SQL_HOUR_MIN[] = "INSERT INTO weather3.hourlymin (Temperature,Humidity,Wind )SELECT MIN(Temperature), MIN(Humidity), ROUND(MIN(Wind),1) FROM weather3.temp WHERE recorded >= NOW() - interval 60 second AND NOT EXISTS( SELECT ID FROM weather3.hourlymin WHERE time >= NOW() - interval 5 SECOND limit 1)";
 
 /*
    Insert Daily Database Values
 */
-char INSERT_SQL_DAY_AVG[] = "INSERT INTO weather3.dailyavg( Temperature,Humidity,Wind ) SELECT AVG(Temperature), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 1 DAY AND NOT EXISTS( SELECT ID FROM weather3.dailyavg WHERE time1 >= NOW() - interval 1 DAY limit 1)";
+char INSERT_SQL_DAY_AVG[] = "INSERT INTO weather3.dailyavg( Temperature,Humidity,Wind ) SELECT AVG(Temperature), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 120 SECOND AND NOT EXISTS( SELECT ID FROM weather3.dailyavg WHERE time1 >= NOW() - interval 7 SECOND limit 1)";
+char INSERT_SQL_DAY_MAX[] = "INSERT INTO weather3.dailymax( Temperature,Humidity,Wind ) SELECT MAX(Temperature), MAX(Humidity), ROUND(MAX(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 120 SECOND AND NOT EXISTS( SELECT ID FROM weather3.dailymax WHERE time >= NOW() - interval 7 SECOND limit 1)";
+char INSERT_SQL_DAY_MIN[] = "INSERT INTO weather3.dailymin( Temperature,Humidity,Wind ) SELECT MIN(Temperature), MIN(Humidity), ROUND(MIN(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 120 SECOND AND NOT EXISTS( SELECT ID FROM weather3.dailymin WHERE time >= NOW() - interval 7 SECOND limit 1)";
+
 
 /*
-   Insert Monthly Database Values
+   Insert Weekly Database Values
 */
-char INSERT_SQL_MONTH_AVG[] = "INSERT INTO weather3.monthlyavg( Temperature,Humidity,Wind ) SELECT AVG(Temperature), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 30 DAY AND NOT EXISTS( SELECT ID FROM weather3.dailyavg WHERE time1 >= NOW() - interval 30 DAY limit 1)";
+char INSERT_SQL_WEEK_AVG[] = "INSERT INTO weather3.weeklyavg( Temperature,Humidity,Wind ) SELECT AVG(Temperature), AVG(Humidity), ROUND(AVG(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 4 MINUTE AND NOT EXISTS( SELECT ID FROM weather3.weeklyavg WHERE time >= NOW() - interval 11 SECOND limit 1)";
+char INSERT_SQL_WEEK_MAX[] = "INSERT INTO weather3.weeklymax( Temperature,Humidity,Wind ) SELECT MAX(Temperature), MAX(Humidity), ROUND(MAX(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 4 MINUTE AND NOT EXISTS( SELECT ID FROM weather3.weeklymax WHERE time >= NOW() - interval 11 SECOND limit 1)";
+char INSERT_SQL_WEEK_MIN[] = "INSERT INTO weather3.weeklymin( Temperature,Humidity,Wind ) SELECT MIN(Temperature), MIN(Humidity), ROUND(MIN(Wind),2) FROM weather3.temp WHERE recorded >= NOW() - interval 4 MINUTE AND NOT EXISTS( SELECT ID FROM weather3.weeklymin WHERE time >= NOW() - interval 11 SECOND limit 1)";
+
+
 char query[128];
 
 // WiFi card example
-char ssid[] = "VM1B11F75";    // your SSID
-char pass[] = "Evft5xfeddvE";       // your SSID Password
+//char ssid[] = "VM1B11F75";    // your SSID
+//char pass[] = "Evft5xfeddvE";       // your SSID Password
+char ssid[] = "AndroidAP";    // your SSID
+char pass[] = "12345678";       // your SSID Password
+
 
 
 WiFiClient client;
 MySQL_Connection conn((Client *)&client);
+int SDCounter = 0;
+double data[10000];
+double StandardDeviationResult = 0;
+
 
 void setup() {
 
@@ -89,12 +108,14 @@ void setup() {
   Serial.println("Initalizion Complete.");
   while (!Serial); // wait for serial port to connect
   int i = 0;
-  for (i = 0; i < 25; i++) {
+  /*Setup DHT to allow accurate readings, as DHT sensor values
+    may be delayed by up to 2 seconds
+  */
+  for (i = 0; i < 95; i++) {
     humid = dht.readHumidity();
-    delay(300);
+    delay(75);
     Serial.println(humid);
   }
-
 }
 
 void loop()
@@ -114,31 +135,31 @@ void readCurrentTemperature()
     10 is constant. Each 10 mV is directly proportional to 1 Celcius.
     Therefore:(5.0 * 1000 / 1024) / 10 = 0.48828125
   */
+
   myTemperature = analogRead(tempPin);
   double conv =  (5.0 * 1000 / 1024) / 10;
   myTemperature = myTemperature * conv;
+
+  myTemperature = round(myTemperature);
 }
 
 void readCurrentHumidity()
 {
-  unsigned long currentMillisHumidity = millis();
   //Read Humidity
-  if (currentMillisHumidity - previousMillisHumidity >= 200) {
-    previousMillisHumidity = currentMillisHumidity;
-    humid = dht.readHumidity();
+  humid = dht.readHumidity();
 
-    //Check if any reads failed and exit early (to try again).
-    if (isnan(humid)) {
-      Serial.println("Failed to read from DHT sensor!");
-      return;
-    }
+  //Check if any reads failed and exit early (to try again).
+  while (isnan(humid)) {
+    Serial.print("Failed to read from DHT sensor!           ..");
     Serial.println(humid);
+    humid = dht.readHumidity();
   }
+
 }
 
 void readCurrentWindspeed()
 {
-  windSensorValue = analogRead(windSensorPin); //Get a value between 0 and 1023 from the analog pin connected to the anemometer`
+  windSensorValue = analogRead(windSensorPin); //Get a value between 0 and 1023 from the analog pin connected to the anemometer
   sensorVoltage = windSensorValue * voltageConstant; //sensor value -> voltage
   //Serial.println(sensorVoltage);
 
@@ -151,54 +172,79 @@ void readCurrentWindspeed()
     //For voltages above min value calculate wind speed.
   }
 
-
 }
 
 void insertDataIntoDatabase()
 {
-
   unsigned long currentMillis = millis();
-  unsigned long currentMillis1 = millis();
+  unsigned long currentMillisHour = millis();
+  unsigned long currentMillisDay = millis();
+  unsigned long currentMillisWeek = millis();
 
   MySQL_Cursor *cur_mem = new MySQL_Cursor(&conn);
 
-  if (currentMillis - previousMillis >= 20000) {
-    system("ifconfig wlan0 up > /dev/ttyGS0");
+  if (currentMillis - previousMillis >= 3500) {
     previousMillis = currentMillis;
-    Serial.println("Recording data.");
+    data[SDCounter] = myTemperature;
+    SDCounter++;
+    Serial.print("SD Counter value: ");
+    Serial.println(SDCounter);
     // Initiate the query class instance
-    sprintf(query, INSERT_SQL, myTemperature, humid, windSpeed);
+    if (SDCounter == 12) {
+      Serial.println("Recording data. SD");
+      StandardDeviationResult = calculateStandardDev(data, SDCounter);
+      sprintf(query, INSERT_SQL, myTemperature, humid, windSpeed, StandardDeviationResult);
+      SDCounter = 0;
+    }
+    else {
+      Serial.println("Recording data.");
+      sprintf(query, INSERT_SQL_NULL, myTemperature, humid, windSpeed);
+    }
     // Execute the query
     cur_mem->execute(query);
-    //cur_mem->execute(INSERT_SQL_HOUR_AVG);
-    // cur_mem->execute(INSERT_SQL_HOUR_MAX);
     // Note: since there are no results, we do not need to read any data
-    // Deleting the cursor also frees up memory used
-    system("ifconfig wlan0 down > /dev/ttyGS0");
+
   }
-  //
-  if (currentMillis1 - previousMillis1 >= 30000) {
-    system("ifconfig wlan0 up > /dev/ttyGS0");
-    previousMillis1 = currentMillis1;
-    Serial.println("Recording data into hourly avg.");
+
+  if (currentMillisHour - previousMillis1 >= 6000) {
+    previousMillis1 = currentMillisHour;
+
+    Serial.println("Recording data into hourly.");
     // Initiate the query class instance
     cur_mem->execute(INSERT_SQL_HOUR_AVG);
-    Serial.println("Recording data into hourly max.");
     cur_mem->execute(INSERT_SQL_HOUR_MAX);
+    cur_mem->execute(INSERT_SQL_HOUR_MIN);
     // Note: since there are no results, we do not need to read any data
-    // Deleting the cursor also frees up memory used
-    system("ifconfig wlan0 down > /dev/ttyGS0");
-
   }
 
+  if (currentMillisDay - previousMillisDay >= 9000) {
+    previousMillisDay = currentMillisDay;
 
+    Serial.println("Recording data into Daily.");
+    // Initiate the query class instance
+    cur_mem->execute(INSERT_SQL_DAY_AVG);
+    cur_mem->execute(INSERT_SQL_DAY_MAX);
+    cur_mem->execute(INSERT_SQL_DAY_MIN);
+  }
+
+  if (currentMillisWeek - previousMillisWeek >= 12000) {
+    previousMillisWeek = currentMillisWeek;
+
+    Serial.println("Recording data into Weelky.");
+    // Initiate the query class instance
+    cur_mem->execute(INSERT_SQL_WEEK_AVG);
+    cur_mem->execute(INSERT_SQL_WEEK_MAX);
+    cur_mem->execute(INSERT_SQL_WEEK_MIN);
+  }
+
+  // Deleting the cursor also frees up memory used
   delete cur_mem;
 }
 
 void connectToDB()
 {
   if (conn.connect(server_addr, 3306, user, password)) {
-    delay(1000);
+    delay(1500);
     DBConnected = 1;
   }
   else {
@@ -211,9 +257,10 @@ void connectToWifi()
 {
   // Begin WiFi section
   int status = WiFi.begin(ssid, pass);
-  delay(1500);
+  delay(2500);
   if ( status != WL_CONNECTED) {
     Serial.println("Couldn't get a wifi connection");
+    delay(1500);
     system("reboot > /dev/ttyGS0");
     while (true);
   }
@@ -221,11 +268,42 @@ void connectToWifi()
   else {
     Serial.println("Connected to network");
     IPAddress ip = WiFi.localIP();
+    delay(1500);
     Serial.print("My IP address is: ");
     Serial.println(ip);
     wifiConnected = 1;
   }
   // End WiFi section
+}
+
+double calculateStandardDev(double data[], int i)
+{
+  int ArrSIZE;
+  ArrSIZE = i;
+  int j = 0;
+  double sum = 0.0, mean, standardDeviation = 0.0;
+  double deviation[100];
+  double deviationSquared[100];
+  double deviationSum = 0.0;
+  double variance = 0.0;
+
+  for (j = 0; j < ArrSIZE; j++)
+  {
+    sum += data[j];
+  }
+
+  mean = sum / ArrSIZE;
+  /*******************************/
+  for (j = 0; j < ArrSIZE; j++) {
+    deviation[j] = (data[j] - mean);
+    deviationSquared[j] = pow(deviation[j], 2);
+    deviationSum += deviationSquared[j];
+  }
+
+  variance = (deviationSum / (ArrSIZE-1));
+  standardDeviation = sqrt(variance);
+  return (standardDeviation);
+
 }
 
 void callFunctions()
@@ -244,3 +322,4 @@ void callFunctions()
   insertDataIntoDatabase();
 
 }
+
