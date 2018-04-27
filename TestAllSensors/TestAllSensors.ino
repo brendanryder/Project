@@ -194,11 +194,9 @@ void insertDataIntoDatabase()
     previousMillis = currentMillis;
     StandardDevData[SDCounter] = windSpeed;
     SDCounter++;
-    Serial.print("SD Counter value: ");
-    Serial.println(SDCounter);
-    // Initiate the query class instance
     if (SDCounter == 12) {
       Serial.println("Recording data. SD");
+       // Initiate the query class instance
       StandardDeviationResult = calculateStandardDev(StandardDevData, SDCounter);
       sprintf(query, INSERT_SQL, myTemperature, humid, windSpeed, StandardDeviationResult);
       SDCounter = 0;
@@ -214,7 +212,6 @@ void insertDataIntoDatabase()
   }
 
   if (currentMillisHour - previousMillis1 >= 6000) {
-    Serial.println((currentMillisHour - previousMillis1));
     previousMillis1 = currentMillisHour;
     Serial.println("Recording data into hourly.");
     // Initiate the query class instance
@@ -225,7 +222,6 @@ void insertDataIntoDatabase()
   }
 
   if (currentMillisDay - previousMillisDay >= 8000) {
-    Serial.println(currentMillisDay - previousMillisDay);
     previousMillisDay = currentMillisDay;
 
     Serial.println("Recording data into Daily.");
@@ -236,9 +232,7 @@ void insertDataIntoDatabase()
   }
 
   if (currentMillisWeek - previousMillisWeek >= 12000) {
-    Serial.println(currentMillisWeek - previousMillisWeek);
     previousMillisWeek = currentMillisWeek;
-
     Serial.println("Recording data into Weelky.");
     // Initiate the query class instance
     cur_mem->execute(INSERT_SQL_WEEK_AVG);
