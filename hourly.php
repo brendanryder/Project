@@ -172,7 +172,7 @@
 		
 		<?php
 			//open connection to mysql db
-			$connection = mysqli_connect("192.168.0.157","root","root","weather3") or die("Error " . mysqli_error($connection));
+			$connection = mysqli_connect("192.168.43.79","root","root","weather3") or die("Error " . mysqli_error($connection));
 
 			$hourlyAverageLine = "select * from (select * from hourlyavg order by id desc limit 24) tmp order by tmp.id asc";
 			$hourlyAverage = "SELECT * FROM (select * from hourlyavg order by ID desc limit 1) tmp order by tmp.ID asc";
@@ -310,7 +310,7 @@ d3.select('#chart svg').append('text')
     .attr('y', 16)
     .attr('text-anchor', 'middle')
     .style('font-size', '20px')
-    .text('Weather Data');
+    .text('Hourly Weather Data');
 					
 
 				c3.generate({
