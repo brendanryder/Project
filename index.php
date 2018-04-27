@@ -1,7 +1,7 @@
 
 
 <?php
-	//include('session.php');
+	include('session.php');
 ?>
 <!DOCTYPE html>
 <html>
@@ -132,8 +132,7 @@
 				$connection = mysqli_connect("192.168.43.79","root","root","weather3") or die("Error " . mysqli_error($connection));
 				
 				//fetch table rows from mysql db
-				 //  $sql = "select * from data_data order by ID desc limit 30";
-				//select * from temp order by ID desc limit 3;
+
 				$sql = "select * from (select * from temp order by id desc limit 72) tmp order by tmp.id asc";
 				$currentValues = "select * from (select * from temp order by id desc limit 1) tmp order by tmp.id asc";
 				$result = mysqli_query($connection, $sql) or die("Error in Selecting " . mysqli_error($connection));
@@ -240,7 +239,7 @@
 										return (value + " m/s");
 
 									else if(id == "StandardDeviation")
-										return (value + " °C");
+										return (value + " m/s");
 					            }
 					        }
 					    }
@@ -352,22 +351,22 @@
 					
 			</script>
 			<?php
-				//$filename = "http://api.sunrise-sunset.org/json?lat=53.801146&lng=-9.522157";
-				//$contents = file_get_contents($filename);
-				//$json = $contents; 
-				//$obj=json_decode($json);  
+				$filename = "http://api.sunrise-sunset.org/json?lat=53.801146&lng=-9.522157";
+				$contents = file_get_contents($filename);
+				$json = $contents; 
+				$obj=json_decode($json);  
 				
-				//$sunrise=$obj->results->sunrise;
-				//$sunset=$obj->results->sunset;
-				//$solarNoon=$obj->results->solar_noon;
+				$sunrise=$obj->results->sunrise;
+				$sunset=$obj->results->sunset;
+				$solarNoon=$obj->results->solar_noon;
 				
-				//$sunrise = new DateTime("$sunrise +00");
-				//$sunset = new DateTime("$sunset +00");
-				//$solarNoon = new DateTime("$solarNoon +00");
+				$sunrise = new DateTime("$sunrise +00");
+				$sunset = new DateTime("$sunset +00");
+				$solarNoon = new DateTime("$solarNoon +00");
 				
-				//$sunrise->setTimezone(new DateTimeZone('Europe/Dublin'));
-				//$sunset->setTimezone(new DateTimeZone('Europe/Dublin'));
-				//$solarNoon->setTimezone(new DateTimeZone('Europe/Dublin'));
+				$sunrise->setTimezone(new DateTimeZone('Europe/Dublin'));
+				$sunset->setTimezone(new DateTimeZone('Europe/Dublin'));
+				$solarNoon->setTimezone(new DateTimeZone('Europe/Dublin'));
 				
 				?>
 			<table align="center" height="250" style="margin: 10px auto;">
