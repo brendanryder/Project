@@ -1,6 +1,6 @@
 /*
    Brendan Ryder
-   20/04/2018
+   28/04/2018
 */
 
 
@@ -42,6 +42,7 @@ int tempPin = A3; // analog input pin
 unsigned long previousMillis = 0;
 unsigned long previousMillis1 = 0;
 unsigned long previousMillisDay = 0;
+unsigned long previousMillisWeek = 0;
 
 const long interval = 5000;
 double humid;
