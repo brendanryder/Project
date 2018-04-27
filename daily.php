@@ -162,12 +162,11 @@
 		
 		<?php
 			//open connection to mysql db
-			$connection = mysqli_connect("192.168.0.157","root","root","weather3") or die("Error " . mysqli_error($connection));
+			$connection = mysqli_connect("192.168.43.79","root","root","weather3") or die("Error " . mysqli_error($connection));
 			
 			
 			//fetch table rows from mysql db
-			//  $sql = "select * from data_data order by ID desc limit 30";
-			//select * from data_data order by ID desc limit 1
+			
 			$dailyAverageLine = "select * from (select * from dailyavg order by id desc limit 30) tmp order by tmp.id asc";
 			$dailyAverage = "SELECT * FROM (select * from dailyavg order by ID desc limit 1) tmp order by tmp.ID asc";
 			$dailyMax = "SELECT * FROM (select * from dailymax order by ID desc limit 1) tmp order by tmp.ID asc";
@@ -242,13 +241,9 @@
 				            x: 'time1',
 				            value: ['Temperature', 'Humidity', 'Wind']
 				        },selection: {
-				//enabled: true,
-				//multiple: true,
-				//draggable: true,
+
 			  },
-			  			        onclick: function (value) { 
-            alert('You clicked a tick.');
-        },
+
 				},
 				
 					zoom: {
@@ -304,7 +299,7 @@ d3.select('#chart svg').append('text')
     .attr('y', 16)
     .attr('text-anchor', 'middle')
     .style('font-size', '20px')
-    .text('Weather Data');
+    .text('Daily Weather Data');
 					
 
 				c3.generate({
