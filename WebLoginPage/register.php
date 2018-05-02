@@ -9,10 +9,32 @@
 		$password = $_POST['password'];
 		$confirm_password = $_POST['confirmPassword'];
 		
+		$name = addslashes($name);
+		$email = addslashes($email);
+		$password = addslashes($password);
+		$confirm_password = addslashes($confirm_password);
+		
 		$sql_username = "SELECT * FROM admin WHERE user='$name'";
 		$sql_email = "SELECT * FROM admin WHERE email='$email'";
 		$res_username = mysqli_query($db, $sql_username);
 		$res_email = mysqli_query($db, $sql_email);
+		
+		
+		if (preg_match("/'/", $name)) {
+			$error = true;
+			$apostrophe_error = "Username cannot contain an apostrophe (')";
+		}
+		
+		if (preg_match("/'/", $email)) {
+			$error = true;
+			$email_apostrophe_error = "Email cannot contain an apostrophe (')";
+			
+		}
+		if (preg_match("/'/", $password)) {
+			$error = true;
+			$pass_apostrophe_error = "Password cannot contain an apostrophe (')";
+			
+		}
 		
 		if (mysqli_num_rows($res_username) > 0) {
 			$username_error = "A user with this username already exists";
@@ -41,7 +63,7 @@
 		if (preg_match('/\s/', $password)) {
 			$error = true;
 			$whitespace_error = "Password cannot contain WHITESPACE characters";
-		}		
+		}
 	
 		if($password != $confirm_password) {
 			$error = true;
@@ -91,19 +113,23 @@
 				<input class="Myinput" type="text" placeholder="Enter Username" name="username" required>
 				<center>
 					<div class = "unsuccessfulRegister"><?php echo @$username_error; ?></div>
+					<div class = "unsuccessfulRegister"><?php echo @$apostrophe_error; ?></div>
 				</center>
 				<input class="Myinput"type="text" placeholder="Enter Email" name="email" required>
 				<center>
 					<div class = "unsuccessfulRegister"><?php echo @$email_error; ?></div>
-				</center>
-				<center>
+					<div class = "unsuccessfulRegister"><?php echo @$email_apostrophe_error; ?></div>
 					<div class = "unsuccessfulRegister"><?php echo @$emailName_error; ?></div>
 				</center>
+				
 				<input class="Myinput" type="password" placeholder="Enter Password" name="password" required>
-				<div class = "unsuccessfulRegister"><?php echo @$length_error; ?></div>
-				<div class = "unsuccessfulRegister"><?php echo @$caps_error; ?></div>
-				<div class = "unsuccessfulRegister"><?php echo @$num_error; ?></div>
-				<div class = "unsuccessfulRegister"><?php echo @$whitespace_error; ?></div>
+				<center>
+					<div class = "unsuccessfulRegister"><?php echo @$length_error; ?></div>
+					<div class = "unsuccessfulRegister"><?php echo @$caps_error; ?></div>
+					<div class = "unsuccessfulRegister"><?php echo @$num_error; ?></div>
+					<div class = "unsuccessfulRegister"><?php echo @$whitespace_error; ?></div>
+					<div class = "unsuccessfulRegister"><?php echo @$pass_apostrophe_error; ?></div>
+				</center>
 				
 				<input class="Myinput" type="password" placeholder="Confirm Password" name="confirmPassword" required>
 				<center>
