@@ -351,7 +351,7 @@
 					
 			</script>
 			<?php
-				$filename = "http://api.sunrise-sunset.org/json?lat=53.801146&lng=-9.522157";
+				$filename = "http://api.sunrise-sunset.org/json?lat=53.270668&lng=-9.056791";
 				$contents = file_get_contents($filename);
 				$json = $contents; 
 				$obj=json_decode($json);  
